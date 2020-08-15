@@ -2,5 +2,50 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "newProjectRoot": "projects",
-  "projects": {}
+  "projects": {
+    "surface-draw": {
+      "projectType": "library",
+      "root": "projects/surface-draw",
+      "sourceRoot": "projects/surface-draw/src",
+      "prefix": "lib",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/surface-draw/tsconfig.lib.json",
+            "project": "projects/surface-draw/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/surface-draw/tsconfig.lib.prod.json"
+            }
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/surface-draw/src/test.ts",
+            "tsConfig": "projects/surface-draw/tsconfig.spec.json",
+            "karmaConfig": "projects/surface-draw/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/surface-draw/tsconfig.lib.json",
+              "projects/surface-draw/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**",
+              "**/my-libs/**"
+            ]
+          }
+        }
+      }
+    }},
+  "cli": {
+    "analytics": "515385b6-6760-42b8-8afc-1a4d03a94613"
+  },
+  "defaultProject": "surface-draw"
 }

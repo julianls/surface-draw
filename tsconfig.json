@@ -6,5 +6,12 @@
 */
 {
   "files": [],
-  "references": []
+  "references": [
+    {
+      "path": "./projects/surface-draw/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/surface-draw/tsconfig.spec.json"
+    }
+]
 }
