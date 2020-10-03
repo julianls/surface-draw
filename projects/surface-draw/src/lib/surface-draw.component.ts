@@ -648,34 +648,37 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     this.stateEvent = event;
   }
 
-  @HostListener('panstart', ['$event'])
+  @HostListener('touchstart', ['$event'])
   protected onPanStart(event): void {
-    if (event.pointerType === 'touch') {
+    if (event.touches && event.touches.length > 0) {
       this.isPan = true;
-      event.preventDefault();
       this.stateEvent = event;
-      const pt = new Point(event.center.x, event.center.y - this.divElement.nativeElement.offsetTop);
+      event.preventDefault();
+      const touch = event.touches[0];
+      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.down.emit(sd);
     }
   }
 
-  @HostListener('panmove', ['$event'])
+  @HostListener('touchmove', ['$event'])
   protected onPanMove(event): void {
-    if (event.pointerType === 'touch') {
+    if (event.touches && event.touches.length > 0) {
       event.preventDefault();
-      const pt = new Point(event.center.x, event.center.y - this.divElement.nativeElement.offsetTop);
+      const touch = event.touches[0];
+      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.move.emit(sd);
     }
   }
 
-  @HostListener('panend', ['$event'])
+  @HostListener('touchend', ['$event'])
   protected onPanEnd(event): void {
-    if (event.pointerType === 'touch') {
+    if (event.changedTouches && event.changedTouches.length > 0) {
       this.isPan = false;
       event.preventDefault();
-      const pt = new Point(event.center.x, event.center.y - this.divElement.nativeElement.offsetTop);
+      const touch = event.changedTouches[0];
+      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.up.emit(sd);
       this.stateEvent = event;
