@@ -28,6 +28,8 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
   @ViewChild('divElement', { static: true }) divElement: any;
 
   @Input() drawItems: IDrawable[];
+  @Input() SurfaceFill: string;
+  @Input() SurfaceStroke: string;
 
   private offscreenCanvas: HTMLCanvasElement;
 
@@ -252,7 +254,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     x = this.toDeviceX(x);
     y = this.toDeviceY(y);
     /// color for background
-    this.context.fillStyle = '#303030';
+    this.context.fillStyle = this.getFill(); // '#303030';
     /// get width of text
     const oldFont = this.context.font;
     if (font) {
@@ -315,6 +317,14 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     }
   }
 
+  getFill(): string {
+    return this.SurfaceFill; // this.divElement.nativeElement.style.background;
+  }
+
+  getGridStroke(): string {
+    return  this.SurfaceStroke; // this.divElement.nativeElement.style.color;
+  }
+
   drawOffscreen(): void {
     if (!this.canvasValid) {
       this.canvasValid = true;
@@ -322,25 +332,30 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
       this.context.lineWidth = 1;
       this.context.clearRect(0, 0, this.context.canvas.width, this.context.canvas.height);
-      this.context.fillStyle = '#303030';
+      this.context.fillStyle = this.getFill(); // '#303030';
       this.context.fillRect(0, 0, this.context.canvas.width, this.context.canvas.height);
 
+
       if (this.drawItems != null) {
+        this.context.save();
         for (const entry of this.drawItems) {
           if (entry.getLayer() < 0) {
             entry.draw(this);
           }
         }
+        this.context.restore();
       }
 
       this.drawGrid();
 
       if (this.drawItems != null) {
+        this.context.save();
         for (const entry of this.drawItems) {
           if (entry.getLayer() >= 0) {
             entry.draw(this);
           }
         }
+        this.context.restore();
       }
 
       this.drawVerticalRuler();
@@ -376,8 +391,9 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       step *= 0.40;
     }
 
+    this.context.save();
     this.context.lineWidth = 0.25;
-    this.context.strokeStyle = '#FFFFFF';
+    this.context.strokeStyle = this.getGridStroke(); // '#FFFFFF';
     this.context.beginPath();
 
     let len = 10;
@@ -389,7 +405,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
       cnt++;
       if (len === 10) {
-        this.drawRulerText(x, 0, true);
+        this.drawRulerText(x, 5, true);
         cnt = 0;
         len = 5;
       } else if (cnt >= 4) {
@@ -406,7 +422,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
       cnt++;
       if (len === 10) {
-        this.drawRulerText(x, 0, true);
+        this.drawRulerText(x, 5, true);
         cnt = 0;
         len = 5;
       } else if (cnt >= 4) {
@@ -416,6 +432,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
     this.context.closePath();
     this.context.stroke();
+    this.context.restore();
   }
 
   drawVerticalRuler(): void {
@@ -432,8 +449,9 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       step *= 0.40;
     }
 
+    this.context.save();
     this.context.lineWidth = 0.25;
-    this.context.strokeStyle = '#FFFFFF';
+    this.context.strokeStyle = this.getGridStroke(); // '#FFFFFF';
 
     this.context.beginPath();
 
@@ -473,6 +491,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
     this.context.closePath();
     this.context.stroke();
+    this.context.restore();
   }
 
   drawRulerText(x: number, y: number, horizontal: boolean): void {
@@ -486,7 +505,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     ///// draw background rect assuming height of font
     // this.context.fillRect(x - width / 2.0, y - 6, width, 12);
 
-    this.context.fillStyle = '#FFFFFF4A';
+    this.context.fillStyle = this.getGridStroke(); // '#FFFFFF4A';
     if (horizontal) {
       this.context.textBaseline = 'top';
     }
@@ -518,8 +537,10 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       step *= 0.40;
     }
 
+    this.context.save();
+    this.context.globalAlpha = 0.4;
     this.context.lineWidth = 0.25;
-    this.context.strokeStyle = '#3C3C3C';
+    this.context.strokeStyle = this.getGridStroke(); // '#3C3C3C';
     // this.context.strokeStyle = "#FFFFFF";
     this.context.setLineDash([4, 2]);
     this.context.beginPath();
@@ -549,7 +570,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
     step = step * 5;
     this.context.lineWidth = 0.5;
-    this.context.strokeStyle = '#3C3C3C';
+    this.context.strokeStyle = this.getGridStroke(); // '#3C3C3C';
     this.context.beginPath();
 
     const hw = 0.5;
@@ -578,6 +599,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     this.context.closePath();
     this.context.stroke();
     this.context.setLineDash([]);
+    this.context.globalAlpha = 1;
 
     // this.context.strokeStyle = "#000000";
     // this.context.lineWidth = 1;
@@ -589,6 +611,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (this.drawAxises) {
       this.drawCoordinateSystem();
     }
+    this.context.restore();
   }
 
   private drawCoordinateSystem(): void {
