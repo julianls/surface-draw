@@ -17,7 +17,6 @@ import { SurfaceData } from './surface-data';
   }
 
   .div-root {
-    position: fixed;
     width: 100%;
     height: 100%;
   }
@@ -30,6 +29,8 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
   @Input() drawItems: IDrawable[];
   @Input() SurfaceFill: string;
   @Input() SurfaceStroke: string;
+  @Input() drawAxises = false;
+  @Input() drawDebug = false;
 
   private offscreenCanvas: HTMLCanvasElement;
 
@@ -39,8 +40,6 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
   private widthValue = 0;
   private heightValue = 0;
   private switchValue = false;
-
-  @Input() drawAxises = false;
 
   @Output() scaleChange = new EventEmitter();
   @Output() offsetXChange = new EventEmitter();
@@ -65,6 +64,8 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
   // @Output() click: EventEmitter<Point> = new EventEmitter<Point>();
 
   private stateEvent: any = null;
+  private controlTop = 0;
+  private controlLeft = 0;
 
   constructor() { }
 
@@ -302,10 +303,28 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       this.toDeviceScale(val);
   }
 
+  private calcOffsets(): void {
+    let el = this.canvasRef.nativeElement;
+
+    this.controlTop = 0;
+    this.controlLeft = 0;
+
+    while (el){
+      // console.log('parentElement => ' + el.parentElement);
+      this.controlTop += el.offsetTop;
+      this.controlLeft += el.offsetLeft;
+      el = el.offsetParent;
+    }
+
+    // console.log('top => ' + this.contolTop);
+    // console.log('left => ' + this.contolLeft);
+  }
+
   getCenter(): Point {
-    const el: HTMLDivElement = this.divElement.nativeElement;
-    const centerX = el.clientWidth / 2.0 - el.offsetLeft / 2.0;
-    const centerY = el.clientHeight / 2.0 - el.offsetTop / 2.0;
+    this.calcOffsets();
+    const el = this.divElement.nativeElement;
+    const centerX = el.clientWidth / 2.0; // - this.controlLeft / 2.0;
+    const centerY = el.clientHeight / 2.0; // - this.controlTop / 2.0;
     return new Point(centerX, centerY);
   }
 
@@ -611,11 +630,36 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (this.drawAxises) {
       this.drawCoordinateSystem();
     }
+
+    if (this.drawDebug) {
+      this.drawDebugInfo();
+    }
+
     this.context.restore();
   }
 
+  private drawDebugInfo(): void {
+    const posX = 100;
+    let posY = 100;
+
+    this.context.fillStyle = this.getGridStroke();
+
+    this.context.fillText('position => x:'
+      + this.pointerPosition.x + ', y:'
+      + this.pointerPosition.y,
+      posX, posY);
+
+    posY += 20;
+
+    this.context.fillText('top/left => top:'
+      + this.controlTop + ', left:'
+      + this.controlLeft,
+      posX, posY);
+
+  }
+
   private drawCoordinateSystem(): void {
-    const calcHeight = this.height - this.divElement.nativeElement.offsetTop;
+    const calcHeight = this.height - this.controlTop;
 
     this.context.lineWidth = 1;
     this.context.strokeStyle = '#00BFA5';
@@ -643,7 +687,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (this.isPan) {
       return;
     }
-    const pt = new Point(event.clientX, event.clientY - this.divElement.nativeElement.offsetTop);
+    const pt = new Point(event.clientX - this.controlLeft, event.clientY - this.controlTop);
     this.stateEvent = event;
     const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
     this.down.emit(sd);
@@ -654,7 +698,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (this.isPan) {
       return;
     }
-    const pt = new Point(event.clientX, event.clientY - this.divElement.nativeElement.offsetTop);
+    const pt = new Point(event.clientX - this.controlLeft, event.clientY - this.controlTop);
     const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
     this.pointerPosition = sd.modelPoint;
     this.move.emit(sd);
@@ -665,7 +709,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (this.isPan) {
       return;
     }
-    const pt = new Point(event.clientX, event.clientY - this.divElement.nativeElement.offsetTop);
+    const pt = new Point(event.clientX - this.controlLeft, event.clientY - this.controlTop);
     const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
     this.up.emit(sd);
     this.stateEvent = event;
@@ -678,7 +722,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       this.stateEvent = event;
       event.preventDefault();
       const touch = event.touches[0];
-      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
+      const pt = new Point(touch.clientX - this.controlLeft, touch.clientY - this.controlTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.down.emit(sd);
     }
@@ -689,7 +733,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
     if (event.touches && event.touches.length > 0) {
       event.preventDefault();
       const touch = event.touches[0];
-      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
+      const pt = new Point(touch.clientX - this.controlLeft, touch.clientY - this.controlTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.move.emit(sd);
     }
@@ -701,7 +745,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
       this.isPan = false;
       event.preventDefault();
       const touch = event.changedTouches[0];
-      const pt = new Point(touch.clientX, touch.clientY - this.divElement.nativeElement.offsetTop);
+      const pt = new Point(touch.clientX - this.controlLeft, touch.clientY - this.controlTop);
       const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
       this.up.emit(sd);
       this.stateEvent = event;
@@ -710,7 +754,7 @@ export class SurfaceDrawComponent implements OnInit, OnChanges, AfterViewInit, I
 
   @HostListener('mousewheel', ['$event'])
   onMousewheel(event): void {
-    const pt = new Point(event.clientX, event.clientY - this.divElement.nativeElement.offsetTop);
+    const pt = new Point(event.clientX - this.controlLeft, event.clientY - this.controlTop);
     const sd = new SurfaceData(pt, this.toLogical(pt), this, event, this.stateEvent);
     this.wheelRotate.emit(sd);
   }
