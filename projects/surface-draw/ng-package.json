@@ -2,9 +2,6 @@
   "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
   "dest": "../../dist/surface-draw",
   "lib": {
-    "entryFile": "src/public-api.ts",
-    "umdModuleIds": {
-      "my-libs/base-geometry": "base-geometry"
-    }  
+    "entryFile": "src/public-api.ts"
   }
 }
